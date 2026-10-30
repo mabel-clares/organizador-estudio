@@ -1,0 +1,475 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Mi organizador de estudio</title>
+<meta name="theme-color" content="#F472B6">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="Estudio">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="icon" type="image/png" sizes="32x32" href="favicon-32.png">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<style>
+:root {
+  --ink: #3a2e30; --ink2: #6b6062; --ink3: #9a9092; --hairline: #efe6e0;
+  --teal: #4fa795; --teal-soft: #e3f2ee; --red: #ed4c57; --red-soft: #fdeaea;
+  --sand: #faf3ec; --amber-soft: #fdf0dc; --lilac-soft: #efebfb;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--sand); color: var(--ink); font-family: system-ui, -apple-system, 'Segoe UI', Roboto, sans-serif; font-size: 15px; line-height: 24px; }
+.card { max-width: 480px; margin: 0 auto; background: #fffdfb; min-height: 100vh; padding: 20px 20px 110px; }
+h1 { font-weight: 700; font-size: 26px; line-height: 32px; letter-spacing: -0.01em; margin: 4px 0 4px; color: var(--ink); }
+.fact { color: var(--teal); font-weight: 700; font-size: 13px; margin: 0 0 10px; }
+.intro { margin: 0 0 14px; color: var(--ink2); }
+.hero { width: 100%; height: auto; aspect-ratio: 16/9; border-radius: 22px; display: block; box-shadow: 0 6px 18px rgba(236,72,153,0.22); }
+.caption { font-size: 12px; line-height: 20px; color: var(--ink3); }
+.tabs { position: fixed; left: 50%; transform: translateX(-50%); bottom: max(10px, env(safe-area-inset-bottom)); width: calc(100% - 24px); max-width: 456px; display: flex; gap: 4px; padding: 8px; background: rgba(255,255,255,0.96); border: 2px solid #fbcfe8; border-radius: 28px; box-shadow: 0 8px 24px rgba(236,72,153,0.25); z-index: 10; margin: 0; }
+.tabs button { flex: 1 1 0; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; min-height: 56px; padding: 6px 2px; border-radius: 22px; border: none; background: transparent; color: var(--ink2); font: inherit; font-size: 11px; font-weight: 700; cursor: pointer; transition: background .15s, transform .1s; }
+.tabs button .ti { font-size: 22px; line-height: 26px; }
+.tabs button:active { transform: scale(0.95); }
+.tabs button.active { background: linear-gradient(135deg, #f9a8d4, #ec4899); color: #fff; box-shadow: 0 4px 10px rgba(236,72,153,0.35); }
+.group-title { font-weight: 800; font-size: 18px; line-height: 26px; margin: 20px 0 10px; }
+.sub-title { font-size: 15px; font-weight: 700; margin: 24px 0 4px; }
+.note { background: var(--teal-soft); border-radius: 14px; padding: 12px 14px; margin: 12px 0; }
+.note strong { display: block; font-size: 14px; }
+.note p { margin: 4px 0 0; }
+.ok-line { color: var(--teal); font-weight: 700; }
+.task-row { display: flex; align-items: center; gap: 4px; padding: 8px 0; border-bottom: 1px solid var(--hairline); }
+.check { flex: 0 0 auto; width: 44px; height: 44px; border: none; background: transparent; cursor: pointer; display: flex; align-items: center; justify-content: center; padding: 0; }
+.dot { width: 28px; height: 28px; border-radius: 50%; border: 2px solid var(--teal); display: flex; align-items: center; justify-content: center; color: #fff; font-size: 15px; line-height: 1; }
+.done .dot { background: var(--teal); }
+.task-text { flex: 1 1 auto; min-width: 0; font-size: 15px; line-height: 22px; }
+.done .task-text { color: var(--ink3); text-decoration: line-through; }
+.tag { margin-left: 8px; font-size: 12px; color: var(--ink2); background: var(--amber-soft); border-radius: 999px; padding: 2px 8px; }
+.subj-chip { display: inline-block; margin-left: 6px; font-size: 11px; font-weight: 700; line-height: 16px; padding: 2px 8px; border-radius: 999px; white-space: nowrap; }
+.del { flex: 0 0 auto; width: 44px; height: 44px; border: none; background: transparent; color: var(--ink3); font-size: 20px; cursor: pointer; padding: 0; }
+.exam-subject { font-weight: 700; }
+.exam-detail { font-size: 13px; line-height: 20px; color: var(--ink2); }
+.chip { flex: 0 0 auto; font-size: 12px; font-weight: 700; line-height: 16px; padding: 5px 11px; border-radius: 999px; white-space: nowrap; }
+.chip-teal { color: #2f7a6b; background: var(--teal-soft); }
+.chip-red { color: var(--red); background: var(--red-soft); }
+.field-label { display: block; font-size: 13px; font-weight: 600; line-height: 20px; color: var(--ink2); margin: 12px 0 6px; }
+.text-input { width: 100%; font: inherit; font-size: 15px; padding: 12px 14px; border: 2px solid var(--hairline); border-radius: 12px; color: var(--ink); background: #fff; }
+.text-input:focus { border-color: var(--teal); outline: none; }
+.form-actions { margin-top: 12px; display: flex; }
+.btn { min-height: 46px; padding: 0 20px; border-radius: 999px; font-size: 14px; font-weight: 700; cursor: pointer; border: 2px solid transparent; }
+.btn-primary { background: var(--teal); color: #fff; }
+.btn-secondary { background: #fff; color: var(--ink); border-color: var(--hairline); }
+.btn-ghost { background: transparent; color: var(--ink2); }
+.btn:disabled { opacity: 0.35; cursor: default; }
+.tech { margin: 0 0 12px; background: #fdf9f4; border-radius: 14px; padding: 12px 14px; }
+.tech-title { font-size: 15px; font-weight: 800; margin: 0; }
+.tech-sub { font-size: 12px; color: var(--teal); font-weight: 700; margin: 2px 0 6px; }
+.tech p { margin: 8px 0; }
+.timer { text-align: center; padding: 8px 0 12px; }
+.timer-mode { font-size: 13px; font-weight: 600; color: var(--ink2); }
+.timer-time { font-size: 46px; line-height: 56px; font-variant-numeric: tabular-nums; font-weight: 800; color: var(--teal); }
+.timer-buttons { display: flex; gap: 8px; justify-content: center; flex-wrap: wrap; }
+.backup { width: 100%; min-height: 76px; margin-top: 12px; padding: 10px 12px; font: inherit; font-size: 12px; line-height: 18px; border: 2px solid var(--hairline); border-radius: 12px; resize: vertical; background: #fff; }
+.closing { font-size: 12px; line-height: 20px; color: var(--ink3); margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--hairline); }
+a { color: var(--teal); font-weight: 600; }
+
+.btn { box-shadow: 0 3px 8px rgba(236,72,153,0.15); }
+.btn-primary { background: linear-gradient(135deg, #f9a8d4, #ec4899); }
+.btn:active { transform: scale(0.97); }
+.tech, .note { border-radius: 20px; }
+.text-input { border-radius: 16px; }
+</style>
+</head>
+<body>
+<div class="card">
+  <header>
+    <h1>📚 Mi organizador de estudio</h1>
+    <p class="fact" id="today-fact"></p>
+    <p class="intro">Qué toca hoy, los exámenes con su cuenta atrás y técnicas que de verdad funcionan. Todo lo que apuntes se guarda solo en este móvil.</p>
+  </header>
+  <svg class="hero" role="img" aria-label="Ilustración de un escritorio con agenda, boli, calendario y cronómetro" viewBox="0 0 640 360" xmlns="http://www.w3.org/2000/svg">
+<defs><linearGradient id="bg" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ffd1e6"/><stop offset="1" stop-color="#f9a8d4"/></linearGradient>
+<linearGradient id="desk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fcd9a8"/><stop offset="1" stop-color="#f6b66e"/></linearGradient></defs>
+<rect width="640" height="360" fill="url(#bg)"/>
+<circle cx="70" cy="60" r="34" fill="#fff" opacity=".35"/><circle cx="560" cy="48" r="22" fill="#fff" opacity=".35"/><circle cx="600" cy="150" r="12" fill="#fff" opacity=".4"/>
+<path d="M300 40l6 14 15 2-11 10 3 15-13-8-13 8 3-15-11-10 15-2z" fill="#fde047"/>
+<path d="M120 120l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="#fff"/>
+<path d="M520 110l4 9 10 1-7 7 2 10-9-5-9 5 2-10-7-7 10-1z" fill="#c4b5fd"/>
+<rect x="0" y="262" width="640" height="98" fill="url(#desk)"/>
+<rect x="0" y="262" width="640" height="8" fill="#f59e0b" opacity=".35"/>
+<!-- calendar -->
+<g transform="rotate(-6 130 190)"><rect x="60" y="120" width="140" height="130" rx="16" fill="#fff"/>
+<path d="M60 136a16 16 0 0 1 16-16h108a16 16 0 0 1 16 16v22H60z" fill="#8b5cf6"/>
+<rect x="88" y="108" width="10" height="26" rx="5" fill="#6d28d9"/><rect x="162" y="108" width="10" height="26" rx="5" fill="#6d28d9"/>
+<g fill="#fbcfe8"><rect x="76" y="172" width="22" height="18" rx="5"/><rect x="108" y="172" width="22" height="18" rx="5"/><rect x="140" y="172" width="22" height="18" rx="5"/><rect x="76" y="198" width="22" height="18" rx="5"/><rect x="140" y="198" width="22" height="18" rx="5"/></g>
+<rect x="108" y="198" width="22" height="18" rx="5" fill="#ec4899"/><path d="M114 207l4 4 8-9" stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round"/></g>
+<!-- agenda -->
+<g transform="rotate(4 320 200)"><rect x="235" y="100" width="170" height="170" rx="16" fill="#fff"/>
+<rect x="235" y="100" width="34" height="170" rx="16" fill="#f472b6"/><rect x="255" y="100" width="14" height="170" fill="#f472b6"/>
+<g fill="#be185d"><rect x="226" y="120" width="30" height="10" rx="5"/><rect x="226" y="152" width="30" height="10" rx="5"/><rect x="226" y="184" width="30" height="10" rx="5"/><rect x="226" y="216" width="30" height="10" rx="5"/></g>
+<g fill="#fbcfe8"><rect x="285" y="128" width="100" height="9" rx="4"/><rect x="285" y="154" width="76" height="9" rx="4"/><rect x="285" y="180" width="100" height="9" rx="4"/><rect x="285" y="206" width="60" height="9" rx="4"/></g>
+<path d="M368 116c0-6 9-6 9 0 0-6 9-6 9 0 0 8-9 12-9 15 0-3-9-7-9-15z" fill="#ec4899"/></g>
+<!-- pen -->
+<g transform="rotate(-38 390 250)"><rect x="340" y="240" width="120" height="20" rx="9" fill="#7c3aed"/><rect x="340" y="240" width="48" height="20" fill="#f472b6"/><rect x="388" y="240" width="4" height="20" fill="#fff"/><path d="M308 250l32-9v18z" fill="#cbd5e1"/><path d="M308 250l8-2.4v4.8z" fill="#1e1b4b"/><rect x="448" y="243" width="16" height="14" rx="4" fill="#ec4899"/><rect x="396" y="235" width="46" height="6" rx="3" fill="#fff"/><rect x="396" y="235" width="5" height="12" rx="2" fill="#fff"/></g>
+<!-- timer -->
+<g><circle cx="520" cy="195" r="58" fill="#2dd4bf"/><circle cx="520" cy="195" r="46" fill="#fff"/><rect x="508" y="124" width="24" height="14" rx="5" fill="#0f766e"/>
+<path d="M520 195V160" stroke="#ec4899" stroke-width="6" stroke-linecap="round"/><path d="M520 195l22 12" stroke="#8b5cf6" stroke-width="6" stroke-linecap="round"/><circle cx="520" cy="195" r="6" fill="#3a2e30"/>
+<g stroke="#99f6e4" stroke-width="4" stroke-linecap="round"><path d="M520 156v6"/><path d="M559 195h-6"/><path d="M520 234v-6"/><path d="M481 195h6"/></g></g>
+<!-- pencil cup & plant -->
+<g><rect x="570" y="232" width="44" height="46" rx="10" fill="#a78bfa"/><rect x="578" y="196" width="6" height="40" rx="3" fill="#f43f5e"/><rect x="590" y="190" width="6" height="46" rx="3" fill="#22c55e"/><rect x="602" y="200" width="6" height="36" rx="3" fill="#38bdf8"/></g>
+</svg>
+  <nav class="tabs" aria-label="Secciones">
+    <button data-tab="hoy" class="active"><span class="ti">📋</span>Hoy</button>
+    <button data-tab="semana"><span class="ti">🗓️</span>Semana</button>
+    <button data-tab="examenes"><span class="ti">📅</span>Exámenes</button>
+    <button data-tab="tecnicas"><span class="ti">⭐</span>Técnicas</button>
+    <button data-tab="copia"><span class="ti">💾</span>Copia</button>
+  </nav>
+  <main id="view"></main>
+  <p class="closing">Tus tareas y exámenes se guardan en este móvil y no se comparten. Consejo: añade esta página a la pantalla de inicio (menú de Chrome → «Añadir a pantalla principal») para tenerla como una app. 💛</p>
+</div>
+<script>
+'use strict';
+// ---- Estado y utilidades ----
+var DAY_MS = 86400000;
+function toISO(d){ var m=String(d.getMonth()+1).padStart(2,'0'), day=String(d.getDate()).padStart(2,'0'); return d.getFullYear()+'-'+m+'-'+day; }
+function todayISO(){ return toISO(new Date()); }
+function parseISO(iso){ var p=iso.split('-').map(Number); return new Date(p[0],p[1]-1,p[2]); }
+function daysUntil(iso){ var now=new Date(); var today=new Date(now.getFullYear(),now.getMonth(),now.getDate()); return Math.round((parseISO(iso).getTime()-today.getTime())/DAY_MS); }
+function fmtLong(iso){ return parseISO(iso).toLocaleDateString('es-ES',{weekday:'long',day:'numeric',month:'long'}); }
+function newId(p){ return p+'-'+Date.now()+'-'+Math.random().toString(36).slice(2,7); }
+function countdown(iso){ var n=daysUntil(iso); if(n<=0) return {text:'Es hoy',urgent:true}; if(n===1) return {text:'Es mañana',urgent:true}; return {text:'Faltan '+n+' días',urgent:false}; }
+
+var store = {
+  available: false,
+  init: function(){
+    try { window.localStorage.setItem('estudio.probe','1'); window.localStorage.removeItem('estudio.probe'); this.available = true; } catch(e){ this.available = false; }
+  },
+  read: function(key, fallback){
+    if(!this.available) return fallback;
+    try { var raw = window.localStorage.getItem(key); return raw != null ? JSON.parse(raw) : fallback; } catch(e){ return fallback; }
+  },
+  write: function(key, value){
+    if(!this.available) return false;
+    try {
+      window.localStorage.setItem(key, JSON.stringify(value));
+      if (navigator.storage && navigator.storage.persist) { navigator.storage.persist().catch(function(){}); }
+      return true;
+    } catch(e){ return false; }
+  }
+};
+store.init();
+
+var tasks = store.read('estudio.tasks.v1', []);
+var exams = store.read('estudio.exams.v1', []);
+function saveTasks(){ if(!store.write('estudio.tasks.v1', tasks)) showStorageWarning(); }
+function saveExams(){ if(!store.write('estudio.exams.v1', exams)) showStorageWarning(); }
+function showStorageWarning(){ var el=document.getElementById('storage-note'); if(el) el.textContent='No se pudo guardar: los cambios duran solo mientras la página esté abierta.'; }
+
+// ---- Asignaturas con color ----
+var SUBJECTS = [
+  {name:'Mates', bg:'#dbeafe', fg:'#1d4ed8'},
+  {name:'Lengua', bg:'#fee2e2', fg:'#b91c1c'},
+  {name:'Inglés', bg:'#ede9fe', fg:'#6d28d9'},
+  {name:'Ciencias', bg:'#dcfce7', fg:'#15803d'},
+  {name:'Sociales', bg:'#ffedd5', fg:'#c2410c'},
+  {name:'Francés', bg:'#cffafe', fg:'#0e7490'},
+  {name:'Tecnología', bg:'#fef9c3', fg:'#a16207'},
+  {name:'Música', bg:'#fce7f3', fg:'#be185d'},
+  {name:'Plástica', bg:'#fae8ff', fg:'#a21caf'},
+  {name:'EF', bg:'#e0e7ff', fg:'#4338ca'},
+  {name:'Otra', bg:'#f1f5f9', fg:'#475569'}
+];
+function subjectStyle(name){ for(var i=0;i<SUBJECTS.length;i++){ if(SUBJECTS[i].name===name) return SUBJECTS[i]; } return SUBJECTS[SUBJECTS.length-1]; }
+function subjChip(name){ var s=subjectStyle(name); var c=el('span','subj-chip',name); c.style.background=s.bg; c.style.color=s.fg; return c; }
+
+// ---- Vista ----
+var view = document.getElementById('view');
+var tab = 'hoy';
+function el(tag, cls, text){ var e=document.createElement(tag); if(cls) e.className=cls; if(text!=null) e.textContent=text; return e; }
+
+function render(){
+  document.querySelectorAll('.tabs button').forEach(function(b){ b.classList.toggle('active', b.dataset.tab===tab); });
+  view.textContent='';
+  if(tab==='hoy') renderHoy();
+  else if(tab==='semana') renderSemana();
+  else if(tab==='examenes') renderExamenes();
+  else if(tab==='copia') renderBackup();
+  else renderTecnicas();
+}
+
+function groupTitle(text){ var h=el('h2','group-title',text); return h; }
+function noteBox(title, body){
+  var d=el('div','note');
+  d.appendChild(el('strong',null,title));
+  d.appendChild(el('p',null,body));
+  return d;
+}
+
+function renderHoy(){
+  var today=todayISO();
+  var next=exams.filter(function(e){return daysUntil(e.date)>=0;}).sort(function(a,b){return a.date.localeCompare(b.date);})[0];
+  if(next){
+    var cd=countdown(next.date);
+    var c=el('div','note');
+    c.appendChild(el('strong',null,'⏳ Próximo examen'));
+    c.appendChild(el('p',null,next.subject+(next.topic?' ('+next.topic+')':'')+': '+cd.text.toLowerCase()+', '+fmtLong(next.date)+'.'));
+    view.appendChild(c);
+  }
+  view.appendChild(groupTitle('✅ Para hoy, '+fmtLong(today)));
+  var pending=tasks.filter(function(t){return !t.done && t.day<=today;}).sort(function(a,b){return a.day.localeCompare(b.day);});
+  var doneToday=tasks.filter(function(t){return t.done && t.day===today;});
+  if(pending.length===0 && doneToday.length===0){
+    view.appendChild(noteBox('🌱 Nada apuntado todavía','Escribe abajo lo primero que tengas que hacer hoy: por ejemplo, «Hacer los ejercicios 3 y 4 de mates». Cuando lo termines, márcalo con el círculo.'));
+  }
+  pending.forEach(function(t){ view.appendChild(taskRow(t)); });
+  if(pending.length===0 && doneToday.length>0){ view.appendChild(el('p','ok-line','🎉 Todo hecho por hoy. ¡Buen trabajo!')); }
+  var futureCount=tasks.filter(function(t){return !t.done && t.day>today;}).length;
+  if(futureCount>0){ view.appendChild(el('p','caption','📆 Tienes '+futureCount+(futureCount===1?' tarea apuntada':' tareas apuntadas')+' para próximos días: están en la pestaña Semana.')); }
+
+  var label=el('label','field-label','Nueva tarea'); label.setAttribute('for','new-task');
+  var input=el('input','text-input'); input.id='new-task'; input.type='text';
+  var subLabel=el('label','field-label','Asignatura'); subLabel.setAttribute('for','new-task-sub');
+  var subSel=el('select','text-input'); subSel.id='new-task-sub';
+  var ph=document.createElement('option'); ph.value=''; ph.textContent='Elige asignatura…'; subSel.appendChild(ph);
+  SUBJECTS.forEach(function(s){ var o=document.createElement('option'); o.value=s.name; o.textContent=s.name; subSel.appendChild(o); });
+  var dayLabel=el('label','field-label','Para qué día'); dayLabel.setAttribute('for','new-task-day');
+  var dayInput=el('input','text-input'); dayInput.id='new-task-day'; dayInput.type='date'; dayInput.value=today;
+  var addBtn=el('button','btn btn-primary','Añadir tarea');
+  addBtn.disabled=true;
+  function checkTask(){ addBtn.disabled=!(input.value.trim() && subSel.value && dayInput.value); }
+  input.addEventListener('input',checkTask); subSel.addEventListener('change',checkTask); dayInput.addEventListener('input',checkTask);
+  function add(){
+    var v=input.value.trim(); if(!v || !subSel.value || !dayInput.value) return;
+    tasks=tasks.concat([{id:newId('t'),text:v,subject:subSel.value,day:dayInput.value,done:false}]);
+    saveTasks(); input.value=''; subSel.value=''; dayInput.value=todayISO(); addBtn.disabled=true; render();
+  }
+  addBtn.addEventListener('click',add);
+  input.addEventListener('keydown',function(ev){ if(ev.key==='Enter' && !addBtn.disabled) add(); });
+  view.appendChild(label); view.appendChild(input); view.appendChild(subLabel); view.appendChild(subSel); view.appendChild(dayLabel); view.appendChild(dayInput);
+  var fw=el('div','form-actions'); fw.appendChild(addBtn); view.appendChild(fw);
+  var sn=el('p','caption'); sn.id='storage-note';
+  if(!store.available) sn.textContent='Este navegador no permite guardar: los cambios duran solo mientras la página esté abierta.';
+  view.appendChild(sn);
+
+  if(doneToday.length>0){
+    view.appendChild(el('h3','sub-title','🎉 Hechas hoy'));
+    doneToday.forEach(function(t){ view.appendChild(taskRow(t)); });
+  }
+}
+
+function taskRow(t){
+  var row=el('div','task-row'+(t.done?' done':''));
+  var check=el('button','check');
+  check.setAttribute('aria-label', t.done?'Marcar como pendiente':'Marcar como hecha');
+  check.appendChild(el('span','dot', t.done?'✓':''));
+  check.addEventListener('click',function(){ tasks=tasks.map(function(x){return x.id===t.id?{id:x.id,text:x.text,subject:x.subject,day:x.day,done:!x.done}:x;}); saveTasks(); render(); });
+  var txt=el('div','task-text',t.text);
+  if(t.subject) txt.appendChild(subjChip(t.subject));
+  if(!t.done && t.day<todayISO()){ txt.appendChild(el('span','tag','de '+parseISO(t.day).toLocaleDateString('es-ES',{weekday:'long'}))); }
+  var del=el('button','del','×'); del.setAttribute('aria-label','Borrar tarea');
+  del.addEventListener('click',function(){ tasks=tasks.filter(function(x){return x.id!==t.id;}); saveTasks(); render(); });
+  row.appendChild(check); row.appendChild(txt); row.appendChild(del);
+  return row;
+}
+
+function renderExamenes(){
+  view.appendChild(groupTitle('🗓️ Cuenta atrás'));
+  var upcoming=exams.filter(function(e){return daysUntil(e.date)>=0;}).sort(function(a,b){return a.date.localeCompare(b.date);});
+  if(upcoming.length===0){
+    view.appendChild(noteBox('📅 Sin exámenes apuntados','Cuando te digan un examen, apúntalo abajo con su fecha: por ejemplo, «Mates», tema «Fracciones». Aquí verás cuántos días quedan, y así puedes repartir el estudio en vez de dejarlo para la víspera.'));
+  }
+  upcoming.forEach(function(e){
+    var row=el('div','task-row');
+    var txt=el('div','task-text');
+    txt.appendChild(el('div','exam-subject',e.subject));
+    txt.appendChild(el('div','exam-detail',[e.topic,fmtLong(e.date)].filter(Boolean).join(' · ')));
+    var cd=countdown(e.date);
+    var chip=el('span','chip '+(cd.urgent?'chip-red':'chip-teal'),cd.text);
+    var del=el('button','del','×'); del.setAttribute('aria-label','Borrar examen');
+    del.addEventListener('click',function(){ exams=exams.filter(function(x){return x.id!==e.id;}); saveExams(); render(); });
+    row.appendChild(txt); row.appendChild(chip); row.appendChild(del);
+    view.appendChild(row);
+  });
+
+  view.appendChild(groupTitle('✏️ Apuntar un examen'));
+  var l1=el('label','field-label','Asignatura'); l1.setAttribute('for','ex-sub');
+  var s=el('input','text-input'); s.id='ex-sub'; s.type='text';
+  var l2=el('label','field-label','Tema (si lo sabes)'); l2.setAttribute('for','ex-topic');
+  var t=el('input','text-input'); t.id='ex-topic'; t.type='text';
+  var l3=el('label','field-label','Fecha del examen'); l3.setAttribute('for','ex-date');
+  var d=el('input','text-input'); d.id='ex-date'; d.type='date'; d.min=todayISO();
+  var btn=el('button','btn btn-primary','Apuntar examen'); btn.disabled=true;
+  function check(){ btn.disabled=!(s.value.trim() && d.value); }
+  s.addEventListener('input',check); d.addEventListener('input',check);
+  btn.addEventListener('click',function(){
+    exams=exams.concat([{id:newId('e'),subject:s.value.trim(),topic:t.value.trim(),date:d.value}]);
+    saveExams(); render();
+  });
+  [l1,s,l2,t,l3,d].forEach(function(x){view.appendChild(x);});
+  var fw=el('div','form-actions'); fw.appendChild(btn); view.appendChild(fw);
+}
+
+function renderSemana(){
+  var today=todayISO();
+  view.appendChild(groupTitle('🗓️ Mi semana'));
+  view.appendChild(el('p','intro','Tus tareas y exámenes de los próximos 7 días, día a día.'));
+  var shown=0;
+  var overdue=tasks.filter(function(t){return !t.done && t.day<today;}).sort(function(a,b){return a.day.localeCompare(b.day);});
+  if(overdue.length>0){
+    view.appendChild(el('h3','sub-title','⏰ Pendientes de antes'));
+    overdue.forEach(function(t){ view.appendChild(taskRow(t)); });
+    shown+=overdue.length;
+  }
+  for(var i=0;i<7;i++){
+    var iso=toISO(new Date(Date.now()+i*DAY_MS));
+    var dayTasks=tasks.filter(function(t){return !t.done && t.day===iso;});
+    var dayExams=exams.filter(function(e){return e.date===iso;});
+    if(dayTasks.length===0 && dayExams.length===0) continue;
+    if(i===0) view.appendChild(el('h3','sub-title','Hoy, '+fmtLong(iso)));
+    else if(i===1) view.appendChild(el('h3','sub-title','Mañana, '+fmtLong(iso)));
+    else view.appendChild(el('h3','sub-title',fmtLong(iso)));
+    dayTasks.forEach(function(t){ view.appendChild(taskRow(t)); });
+    dayExams.forEach(function(e){
+      var row=el('div','task-row');
+      var txt=el('div','task-text');
+      txt.appendChild(el('div','exam-subject',e.subject));
+      if(e.topic) txt.appendChild(el('div','exam-detail',e.topic));
+      row.appendChild(txt); row.appendChild(el('span','chip chip-red','Examen'));
+      view.appendChild(row);
+    });
+    shown+=dayTasks.length+dayExams.length;
+  }
+  if(shown===0){
+    view.appendChild(noteBox('🌈 Semana despejada','No hay nada apuntado para los próximos 7 días. En la pestaña Hoy puedes añadir tareas y elegir para qué día son.'));
+  }
+}
+
+function technique(num, title, sub, paras){
+  var d=el('div','tech');
+  d.appendChild(el('h3','tech-title',num+'. '+title));
+  d.appendChild(el('p','tech-sub',sub));
+  paras.forEach(function(p){ d.appendChild(el('p',null,p)); });
+  return d;
+}
+
+var timer = { mode:'estudio', left:25*60, running:false, handle:null };
+function renderTecnicas(){
+  view.appendChild(groupTitle('⭐ Las dos que más funcionan'));
+  view.appendChild(technique(1,'Ponte a prueba 🧠','La técnica con más evidencia',[
+    'Lee el tema una vez, cierra el libro y escribe o cuenta en voz alta todo lo que recuerdes. Después comprueba qué te ha faltado y repite solo esa parte. También vale hacerse tarjetas con la pregunta por un lado y la respuesta por el otro.',
+    'Cuesta más que releer, y por eso funciona: cada vez que sacas algo de tu memoria, se queda mejor guardado. Es la técnica con más evidencia para estudiantes de todas las edades.'
+  ]));
+  view.appendChild(technique(2,'Reparte el estudio 🗓️','Contra el «lo dejo todo para el final»',[
+    'Rinden más tres ratos de 20 minutos en días distintos que una hora la víspera. Cuando apuntes un examen en la pestaña Exámenes, mira cuántos días quedan y reparte: un rato hoy, otro pasado mañana y un repaso el día anterior.'
+  ]));
+  view.appendChild(groupTitle('🌟 Dos más que ayudan'));
+  view.appendChild(technique(3,'Explícalo con tus palabras 🗣️','Para comprobar si lo entiendes de verdad',[
+    'Explícale el tema a alguien (tu madre, tu hermana, el perro) como si no supiera nada. Si te atascas en un punto, ahí está justo lo que tienes que repasar.'
+  ]));
+  var t4=technique(4,'Bloques de 25 minutos ⏰','Para no dispersarte',[
+    '25 minutos de estudio a tope, sin móvil, y 5 de descanso de verdad: levántate, bebe agua. Después de tres o cuatro bloques, un descanso largo. Aquí tienes el cronómetro:'
+  ]);
+  var tw=el('div','timer');
+  var modeEl=el('div','timer-mode');
+  var timeEl=el('div','timer-time');
+  var btns=el('div','timer-buttons');
+  var startBtn=el('button','btn btn-primary');
+  var resetBtn=el('button','btn btn-secondary','Reiniciar');
+  var skipBtn=el('button','btn btn-ghost');
+  function total(){ return timer.mode==='estudio'?25*60:5*60; }
+  function paint(){
+    modeEl.textContent = timer.mode==='estudio' ? '⏰ A estudiar: 25 minutos sin móvil' : '🧃 Descanso: 5 minutos';
+    var mm=String(Math.max(0,Math.floor(timer.left/60))).padStart(2,'0');
+    var ss=String(Math.max(0,timer.left%60)).padStart(2,'0');
+    timeEl.textContent=mm+':'+ss;
+    startBtn.textContent = timer.running ? 'Pausar' : (timer.left<total() ? 'Seguir' : 'Empezar');
+    skipBtn.textContent = timer.mode==='estudio' ? 'Pasar a descanso' : 'Volver a estudio';
+  }
+  function stop(){ timer.running=false; if(timer.handle){clearInterval(timer.handle); timer.handle=null;} }
+  startBtn.addEventListener('click',function(){
+    if(timer.running){ stop(); paint(); return; }
+    timer.running=true;
+    timer.handle=setInterval(function(){
+      timer.left--;
+      if(timer.left<=0){ stop(); timer.mode=(timer.mode==='estudio'?'descanso':'estudio'); timer.left=total(); }
+      paint();
+    },1000);
+    paint();
+  });
+  resetBtn.addEventListener('click',function(){ stop(); timer.left=total(); paint(); });
+  skipBtn.addEventListener('click',function(){ stop(); timer.mode=(timer.mode==='estudio'?'descanso':'estudio'); timer.left=total(); paint(); });
+  btns.appendChild(startBtn); btns.appendChild(resetBtn); btns.appendChild(skipBtn);
+  tw.appendChild(modeEl); tw.appendChild(timeEl); tw.appendChild(btns);
+  paint();
+  t4.appendChild(tw);
+  view.appendChild(t4);
+  view.appendChild(noteBox('👀 Ojo con subrayar y releer','Releer y subrayar dan la sensación de saber, pero engañan: el tema te suena y crees que te lo sabes. Úsalos solo como primer paso, y después ponte a prueba.'));
+  var src=el('p','caption');
+  src.textContent='De dónde salen: una revisión grande de investigación sobre cómo aprendemos (Dunlosky y otros, 2013) encontró que ponerse a prueba y repartir el estudio son las técnicas que mejor funcionan. ';
+  var a=el('a',null,'Resumen para curiosos (en inglés)'); a.href='https://www.aft.org/ae/fall2013/dunlosky'; a.target='_blank'; a.rel='noopener';
+  src.appendChild(a);
+  view.appendChild(src);
+}
+
+function renderBackup(){
+  view.appendChild(groupTitle('💾 Copia de seguridad'));
+  view.appendChild(el('p',null,'Todo se guarda solo en este móvil. Si se borran los datos del navegador o cambias de móvil, se pierde: por eso puedes sacar aquí una copia y recuperarla luego.'));
+  var out=el('button','btn btn-secondary','Sacar copia');
+  var box=el('textarea','backup'); box.placeholder='Aquí aparece tu copia. Para recuperarla otro día, pégala en este cuadro y pulsa Recuperar.'; box.setAttribute('aria-label','Texto de la copia de seguridad');
+  var restore=el('button','btn btn-secondary','Recuperar desde el cuadro'); restore.disabled=true;
+  var note=el('p','caption');
+  box.addEventListener('input',function(){ restore.disabled=!box.value.trim(); });
+  out.addEventListener('click',function(){
+    var json=JSON.stringify({tasks:tasks,exams:exams},null,1);
+    box.value=json; restore.disabled=false;
+    if(navigator.clipboard && navigator.clipboard.writeText){
+      navigator.clipboard.writeText(json).then(function(){ note.textContent='Copia creada y copiada. Guárdala donde quieras: por ejemplo, enviándotela por WhatsApp.'; },function(){ note.textContent='No se pudo copiar sola: selecciona el texto del cuadro y cópialo a mano.'; });
+    } else { note.textContent='Selecciona el texto del cuadro y cópialo a mano.'; }
+  });
+  restore.addEventListener('click',function(){
+    try{
+      var data=JSON.parse(box.value);
+      tasks=Array.isArray(data.tasks)?data.tasks:[];
+      exams=Array.isArray(data.exams)?data.exams:[];
+      saveTasks(); saveExams(); note.textContent='Datos recuperados.'; render();
+    }catch(err){ note.textContent='Ese texto no es una copia válida. No se ha cambiado nada.'; }
+  });
+  var f1=el('div','form-actions'); f1.appendChild(out);
+  var f2=el('div','form-actions'); f2.appendChild(restore);
+  view.appendChild(f1); view.appendChild(box); view.appendChild(f2); view.appendChild(note);
+}
+
+// ---- Navegación y arranque ----
+document.querySelectorAll('.tabs button').forEach(function(b){
+  b.addEventListener('click',function(){ tab=b.dataset.tab; if(('#'+tab)!==location.hash) location.hash='#'+tab; render(); });
+});
+function fromHash(){ var h=(location.hash||'').replace('#',''); if(['hoy','semana','examenes','tecnicas','copia'].indexOf(h)>=0) tab=h; }
+window.addEventListener('hashchange',function(){ fromHash(); render(); });
+fromHash();
+document.getElementById('today-fact').textContent=fmtLong(todayISO());
+render();
+
+// ---- Autoprueba (?selftest=1) ----
+if(/[?&]selftest=1/.test(location.search)){
+  try{
+    var out=[];
+    tasks=[]; exams=[]; saveTasks(); saveExams();
+    tasks=[{id:'t1',text:'Tarea de prueba',subject:'Mates',day:todayISO(),done:false}]; saveTasks();
+    var t2=store.read('estudio.tasks.v1',[]);
+    out.push(t2.length===1 && t2[0].text==='Tarea de prueba' && t2[0].subject==='Mates' ? 'task-save-ok' : 'task-save-FAIL');
+    exams=[{id:'e1',subject:'Mates',topic:'Fracciones',date:toISO(new Date(Date.now()+5*DAY_MS))}]; saveExams();
+    var e2=store.read('estudio.exams.v1',[]);
+    out.push(e2.length===1 && countdown(e2[0].date).text==='Faltan 5 días' ? 'exam-save-ok' : 'exam-save-FAIL');
+    tab='examenes'; render();
+    out.push(view.textContent.indexOf('Faltan 5 días')>=0 ? 'render-ok' : 'render-FAIL');
+    tab='semana'; render();
+    out.push(view.textContent.indexOf('Mi semana')>=0 && view.textContent.indexOf('Tarea de prueba')>=0 ? 'semana-ok' : 'semana-FAIL');
+    tasks=[]; exams=[]; saveTasks(); saveExams();
+    tab='hoy'; render();
+    var passed=out.every(function(x){return x.indexOf('FAIL')<0;});
+    document.title='SELFTEST '+(passed?'PASS':'FAIL')+' '+out.join(',');
+  }catch(err){ document.title='SELFTEST ERROR '+err.message; }
+}
+
+</script>
+</body>
+</html>
