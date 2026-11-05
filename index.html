@@ -70,6 +70,31 @@ h1 { font-weight: 700; font-size: 26px; line-height: 32px; letter-spacing: -0.01
 .backup { width: 100%; min-height: 76px; margin-top: 12px; padding: 10px 12px; font: inherit; font-size: 12px; line-height: 18px; border: 2px solid var(--hairline); border-radius: 12px; resize: vertical; background: #fff; }
 .closing { font-size: 12px; line-height: 20px; color: var(--ink3); margin-top: 28px; padding-top: 16px; border-top: 1px solid var(--hairline); }
 a { color: var(--teal); font-weight: 600; }
+.mes-nav { display: flex; gap: 8px; align-items: center; justify-content: space-between; margin: 6px 0 10px; }
+.mes-nav .btn { min-height: 38px; padding: 0 12px; font-size: 12px; }
+.mes-title { font-weight: 800; font-size: 16px; text-transform: capitalize; }
+.mes-grid { display: grid; grid-template-columns: repeat(7, 1fr); gap: 4px; }
+.mes-dow { font-size: 10px; font-weight: 800; color: var(--ink3); text-align: center; text-transform: uppercase; }
+.mes-cell { min-height: 52px; background: #fff; border: 1px solid var(--hairline); border-radius: 10px; padding: 3px 4px; }
+.mes-cell.off { background: transparent; border-color: transparent; }
+.mes-cell.today { border-color: #ec4899; border-width: 2px; }
+.mes-day { font-weight: 800; font-size: 11px; line-height: 14px; color: var(--ink2); }
+.mes-dot { display: inline-block; width: 9px; height: 9px; border-radius: 50%; margin: 1px 1px 0 0; }
+.mes-exam { font-size: 9px; font-weight: 800; line-height: 13px; color: var(--red); background: var(--red-soft); border-radius: 6px; padding: 0 4px; margin-top: 2px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.dow-row { display: flex; flex-wrap: wrap; gap: 6px; }
+.dow-pick { display: inline-flex; align-items: center; gap: 4px; font-size: 12px; font-weight: 700; color: var(--ink2); background: #fff; border: 2px solid var(--hairline); border-radius: 999px; padding: 4px 10px; cursor: pointer; }
+.dow-pick input { accent-color: #ec4899; }
+.pill { display: inline-block; font-size: 11px; font-weight: 700; line-height: 16px; border-radius: 999px; padding: 2px 8px; margin-left: 6px; }
+.pill-ok { background: var(--teal-soft); color: #2f7a6b; }
+.pill-mid { background: var(--amber-soft); color: #b45309; }
+.pill-ask { background: var(--lilac-soft); color: #6d28d9; }
+.grade-line { font-size: 14px; font-weight: 700; margin: 2px 0; }
+.mini-btn { min-height: 30px; padding: 0 10px; border-radius: 999px; font-size: 11px; font-weight: 700; border: 1px solid var(--hairline); background: #fff; color: var(--ink2); cursor: pointer; margin: 2px 4px 0 0; }
+.mini-btn:active { transform: scale(0.96); }
+.notice { background: var(--lilac-soft); border-radius: 20px; padding: 12px 14px; margin: 12px 0; font-size: 14px; font-weight: 600; color: #4c1d95; }
+.refl { background: #fdf9f4; border-radius: 20px; padding: 12px 14px; margin: 0 0 10px; }
+.refl p { margin: 4px 0; font-size: 14px; line-height: 20px; }
+
 
 .btn { box-shadow: 0 3px 8px rgba(236,72,153,0.15); }
 .btn-primary { background: linear-gradient(135deg, #f9a8d4, #ec4899); }
@@ -119,8 +144,10 @@ a { color: var(--teal); font-weight: 600; }
   <nav class="tabs" aria-label="Secciones">
     <button data-tab="hoy" class="active"><span class="ti">📋</span>Hoy</button>
     <button data-tab="semana"><span class="ti">🗓️</span>Semana</button>
+    <button data-tab="mes"><span class="ti">📆</span>Mes</button>
     <button data-tab="examenes"><span class="ti">📅</span>Exámenes</button>
     <button data-tab="tecnicas"><span class="ti">⭐</span>Técnicas</button>
+    <button data-tab="progreso"><span class="ti">📈</span>Progreso</button>
     <button data-tab="copia"><span class="ti">💾</span>Copia</button>
   </nav>
   <main id="view"></main>
@@ -162,6 +189,13 @@ var tasks = store.read('estudio.tasks.v1', []);
 var exams = store.read('estudio.exams.v1', []);
 function saveTasks(){ if(!store.write('estudio.tasks.v1', tasks)) showStorageWarning(); }
 function saveExams(){ if(!store.write('estudio.exams.v1', exams)) showStorageWarning(); }
+var grades = store.read('estudio.grades.v1', []);
+var topics = store.read('estudio.topics.v1', []);
+var reflections = store.read('estudio.reflections.v1', []);
+var examNotice = '';
+function saveGrades(){ if(!store.write('estudio.grades.v1', grades)) showStorageWarning(); }
+function saveTopics(){ if(!store.write('estudio.topics.v1', topics)) showStorageWarning(); }
+function saveReflections(){ if(!store.write('estudio.reflections.v1', reflections)) showStorageWarning(); }
 function showStorageWarning(){ var el=document.getElementById('storage-note'); if(el) el.textContent='No se pudo guardar: los cambios duran solo mientras la página esté abierta.'; }
 
 // ---- Asignaturas con color ----
@@ -192,7 +226,9 @@ function render(){
   view.textContent='';
   if(tab==='hoy') renderHoy();
   else if(tab==='semana') renderSemana();
+  else if(tab==='mes') renderMes();
   else if(tab==='examenes') renderExamenes();
+  else if(tab==='progreso') renderProgreso();
   else if(tab==='copia') renderBackup();
   else renderTecnicas();
 }
@@ -274,6 +310,7 @@ function taskRow(t){
 
 function renderExamenes(){
   view.appendChild(groupTitle('🗓️ Cuenta atrás'));
+  if(examNotice){ view.appendChild(el('div','notice',examNotice)); examNotice=''; }
   var upcoming=exams.filter(function(e){return daysUntil(e.date)>=0;}).sort(function(a,b){return a.date.localeCompare(b.date);});
   if(upcoming.length===0){
     view.appendChild(noteBox('📅 Sin exámenes apuntados','Cuando te digan un examen, apúntalo abajo con su fecha: por ejemplo, «Mates», tema «Fracciones». Aquí verás cuántos días quedan, y así puedes repartir el estudio en vez de dejarlo para la víspera.'));
@@ -298,14 +335,40 @@ function renderExamenes(){
   var t=el('input','text-input'); t.id='ex-topic'; t.type='text';
   var l3=el('label','field-label','Fecha del examen'); l3.setAttribute('for','ex-date');
   var d=el('input','text-input'); d.id='ex-date'; d.type='date'; d.min=todayISO();
+  var l4=el('label','field-label','Temas del examen (uno por línea, si los sabes)'); l4.setAttribute('for','ex-topics');
+  var tp=el('textarea','text-input'); tp.id='ex-topics'; tp.rows=3; tp.placeholder='Por ejemplo:\nLas fracciones\nLos decimales';
+  var l5=el('label','field-label','¿Qué días puedes estudiar?');
+  var dowRow=el('div','dow-row');
+  var dowNames=[['Lun',1],['Mar',2],['Mié',3],['Jue',4],['Vie',5],['Sáb',6],['Dom',0]];
+  dowNames.forEach(function(pair){
+    var lab=el('label','dow-pick');
+    var cb=document.createElement('input'); cb.type='checkbox'; cb.checked=true; cb.value=String(pair[1]);
+    lab.appendChild(cb); lab.appendChild(document.createTextNode(pair[0]));
+    dowRow.appendChild(lab);
+  });
+  var planCap=el('p','caption','Si apuntas los temas, te preparo un plan: pequeños repasos repartidos en los días que elijas, hasta el examen. Luego puedes cambiar o borrar cada paso como cualquier tarea.');
   var btn=el('button','btn btn-primary','Apuntar examen'); btn.disabled=true;
   function check(){ btn.disabled=!(s.value.trim() && d.value); }
   s.addEventListener('input',check); d.addEventListener('input',check);
   btn.addEventListener('click',function(){
-    exams=exams.concat([{id:newId('e'),subject:s.value.trim(),topic:t.value.trim(),date:d.value}]);
-    saveExams(); render();
+    var subject=s.value.trim();
+    exams=exams.concat([{id:newId('e'),subject:subject,topic:t.value.trim(),date:d.value}]);
+    saveExams();
+    var topicList=tp.value.split('\n').map(function(x){return x.trim();}).filter(function(x){return x.length>0;});
+    var made=0;
+    if(topicList.length>0){
+      var dows=[];
+      dowRow.querySelectorAll('input[type=checkbox]').forEach(function(cb){ if(cb.checked) dows.push(Number(cb.value)); });
+      if(dows.length===0) dows=[0,1,2,3,4,5,6];
+      made=makeExamPlan(subject, d.value, topicList, dows);
+      saveTasks();
+    }
+    examNotice = made>0
+      ? '💛 He preparado tu plan: '+made+(made===1?' paso de repaso':' pasos de repaso')+' hasta el examen. Los verás en Hoy y en Semana, y puedes moverlos o borrarlos como cualquier tarea.'
+      : '';
+    render();
   });
-  [l1,s,l2,t,l3,d].forEach(function(x){view.appendChild(x);});
+  [l1,s,l2,t,l3,d,l4,tp,l5,dowRow,planCap].forEach(function(x){view.appendChild(x);});
   var fw=el('div','form-actions'); fw.appendChild(btn); view.appendChild(fw);
 }
 
@@ -420,7 +483,7 @@ function renderBackup(){
   var note=el('p','caption');
   box.addEventListener('input',function(){ restore.disabled=!box.value.trim(); });
   out.addEventListener('click',function(){
-    var json=JSON.stringify({tasks:tasks,exams:exams},null,1);
+    var json=JSON.stringify({tasks:tasks,exams:exams,grades:grades,topics:topics,reflections:reflections},null,1);
     box.value=json; restore.disabled=false;
     if(navigator.clipboard && navigator.clipboard.writeText){
       navigator.clipboard.writeText(json).then(function(){ note.textContent='Copia creada y copiada. Guárdala donde quieras: por ejemplo, enviándotela por WhatsApp.'; },function(){ note.textContent='No se pudo copiar sola: selecciona el texto del cuadro y cópialo a mano.'; });
@@ -431,7 +494,10 @@ function renderBackup(){
       var data=JSON.parse(box.value);
       tasks=Array.isArray(data.tasks)?data.tasks:[];
       exams=Array.isArray(data.exams)?data.exams:[];
-      saveTasks(); saveExams(); note.textContent='Datos recuperados.'; render();
+      grades=Array.isArray(data.grades)?data.grades:[];
+      topics=Array.isArray(data.topics)?data.topics:[];
+      reflections=Array.isArray(data.reflections)?data.reflections:[];
+      saveTasks(); saveExams(); saveGrades(); saveTopics(); saveReflections(); note.textContent='Datos recuperados.'; render();
     }catch(err){ note.textContent='Ese texto no es una copia válida. No se ha cambiado nada.'; }
   });
   var f1=el('div','form-actions'); f1.appendChild(out);
@@ -439,11 +505,264 @@ function renderBackup(){
   view.appendChild(f1); view.appendChild(box); view.appendChild(f2); view.appendChild(note);
 }
 
+// ---- Vista Mes ----
+var mesOffset = 0;
+function renderMes(){
+  var now=new Date();
+  var base=new Date(now.getFullYear(), now.getMonth()+mesOffset, 1);
+  var y=base.getFullYear(), m=base.getMonth();
+  view.appendChild(groupTitle('📆 Mi mes'));
+  view.appendChild(el('p','intro','Exámenes y tareas del mes de un vistazo. La vista Semana sigue igual para organizar el día a día.'));
+  var nav=el('div','mes-nav');
+  var prev=el('button','btn btn-secondary','← Anterior');
+  var next=el('button','btn btn-secondary','Siguiente →');
+  prev.addEventListener('click',function(){ mesOffset--; render(); });
+  next.addEventListener('click',function(){ mesOffset++; render(); });
+  nav.appendChild(prev);
+  nav.appendChild(el('div','mes-title', base.toLocaleDateString('es-ES',{month:'long',year:'numeric'})));
+  nav.appendChild(next);
+  view.appendChild(nav);
+  var grid=el('div','mes-grid');
+  ['L','M','X','J','V','S','D'].forEach(function(dn){ grid.appendChild(el('div','mes-dow',dn)); });
+  var lead=(new Date(y,m,1).getDay()+6)%7;
+  var dim=new Date(y,m+1,0).getDate();
+  for(var b=0;b<lead;b++){ grid.appendChild(el('div','mes-cell off')); }
+  var today=todayISO();
+  for(var day=1;day<=dim;day++){
+    var iso=toISO(new Date(y,m,day));
+    var cell=el('div','mes-cell'+(iso===today?' today':''));
+    cell.appendChild(el('div','mes-day',String(day)));
+    exams.filter(function(e){return e.date===iso;}).forEach(function(e){
+      cell.appendChild(el('div','mes-exam','Examen '+e.subject));
+    });
+    var dots=el('div');
+    var dayTasks=tasks.filter(function(t){return !t.done && t.day===iso;});
+    dayTasks.slice(0,4).forEach(function(t){
+      var s=subjectStyle(t.subject);
+      var dot=el('span','mes-dot');
+      dot.style.background=s.bg; dot.style.border='1px solid '+s.fg;
+      dots.appendChild(dot);
+    });
+    if(dayTasks.length>4) dots.appendChild(el('span','caption','+'+(dayTasks.length-4)));
+    cell.appendChild(dots);
+    grid.appendChild(cell);
+  }
+  view.appendChild(grid);
+  view.appendChild(el('p','caption','Cada punto es una tarea pendiente, con el color de su asignatura. Los exámenes van en rojo.'));
+}
+
+// ---- Plan de repaso de un examen ----
+function makeExamPlan(subject, examISO, topicList, dows){
+  var end=parseISO(examISO);
+  var dates=[];
+  var cur=new Date(); cur=new Date(cur.getFullYear(), cur.getMonth(), cur.getDate());
+  while(cur<end){
+    if(dows.indexOf(cur.getDay())>=0) dates.push(toISO(cur));
+    cur=new Date(cur.getTime()+DAY_MS);
+  }
+  var created=0;
+  function addTask(text, day){
+    tasks=tasks.concat([{id:newId('t'),text:text,subject:subject,day:day,done:false}]);
+    created++;
+  }
+  if(dates.length===0){
+    addTask('Examen de '+subject+': repaso general (¡es ya!)', todayISO());
+    return created;
+  }
+  var studyDates=dates;
+  var generalDay=null;
+  if(dates.length>=2){ generalDay=dates[dates.length-1]; studyDates=dates.slice(0,-1); }
+  if(topicList.length===0){
+    studyDates.forEach(function(dt){ addTask('Examen de '+subject+': rato de repaso', dt); });
+  } else {
+    var passes=Math.max(1, Math.ceil(studyDates.length/topicList.length));
+    var idx=0;
+    for(var p=0;p<passes;p++){
+      for(var ti=0;ti<topicList.length;ti++){
+        if(idx>=studyDates.length) break;
+        var dt=studyDates[idx]; idx++;
+        var label = p===0 ? 'repasar '+topicList[ti] : 'repasar de nuevo '+topicList[ti];
+        addTask('Examen de '+subject+': '+label, dt);
+      }
+      if(idx>=studyDates.length) break;
+    }
+  }
+  if(generalDay) addTask('Examen de '+subject+': repaso general de todo', generalDay);
+  return created;
+}
+
+// ---- Vista Progreso ----
+function allSubjectNames(){
+  var names=SUBJECTS.map(function(s){return s.name;});
+  [tasks,exams,grades,topics,reflections].forEach(function(arr){
+    arr.forEach(function(x){ if(x.subject && names.indexOf(x.subject)<0) names.push(x.subject); });
+  });
+  return names;
+}
+function subjectSelect(id){
+  var sel=el('select','text-input'); sel.id=id;
+  var ph=document.createElement('option'); ph.value=''; ph.textContent='Elige asignatura…'; sel.appendChild(ph);
+  allSubjectNames().forEach(function(n){ var o=document.createElement('option'); o.value=n; o.textContent=n; sel.appendChild(o); });
+  return sel;
+}
+var TOPIC_STATUS=[
+  {key:'entiendo', label:'✅ Lo entiendo', pill:'pill-ok', short:'Lo entiendo'},
+  {key:'repasar', label:'🔁 Necesito repasar', pill:'pill-mid', short:'A repasar'},
+  {key:'preguntar', label:'🙋 Quiero preguntar en clase', pill:'pill-ask', short:'Preguntar en clase'}
+];
+function topicStatus(key){ for(var i=0;i<TOPIC_STATUS.length;i++){ if(TOPIC_STATUS[i].key===key) return TOPIC_STATUS[i]; } return TOPIC_STATUS[1]; }
+function fmtGrade(v){ return String(v).replace('.',','); }
+
+function renderProgreso(){
+  view.appendChild(groupTitle('📈 Mi progreso'));
+  view.appendChild(el('p','intro','Tus notas, los temas como los llevas y lo que aprendes de cada examen. Solo lo ves tú, en este móvil.'));
+
+  // -- Notas --
+  view.appendChild(el('h3','sub-title','🎀 Mis notas'));
+  var gradeSubjects={};
+  grades.forEach(function(g){ if(!gradeSubjects[g.subject]) gradeSubjects[g.subject]=[]; gradeSubjects[g.subject].push(g); });
+  var gNames=Object.keys(gradeSubjects).sort();
+  if(gNames.length===0){
+    view.appendChild(noteBox('🌱 Aún no hay notas','Cuando te den la nota de un examen o un trimestre, apúntala abajo. Con el tiempo verás cómo va cada asignatura.'));
+  }
+  gNames.forEach(function(name){
+    var box=el('div','refl');
+    box.appendChild(subjChipTitle(name));
+    var list=gradeSubjects[name].slice().sort(function(a,b){ return (a.term+a.date).localeCompare(b.term+b.date); });
+    list.forEach(function(g){
+      var row=el('div','task-row');
+      row.appendChild(el('div','task-text grade-line', g.term+'º trimestre: '+fmtGrade(g.value)+(g.note?' · '+g.note:'')));
+      var del=el('button','del','×'); del.setAttribute('aria-label','Borrar nota');
+      del.addEventListener('click',function(){ grades=grades.filter(function(x){return x.id!==g.id;}); saveGrades(); render(); });
+      row.appendChild(del);
+      box.appendChild(row);
+    });
+    if(list.length>=2){
+      var prev=list[list.length-2].value, last=list[list.length-1].value;
+      var msg = last>prev ? '📈 Va subiendo: de '+fmtGrade(prev)+' a '+fmtGrade(last)+'. ¡Sigue así!' :
+                last<prev ? '📉 Ha bajado un poco: de '+fmtGrade(prev)+' a '+fmtGrade(last)+'. Mira abajo qué temas toca repasar.' :
+                '➡️ Se mantiene en '+fmtGrade(last)+'.';
+      box.appendChild(el('p','exam-detail',msg));
+    }
+    view.appendChild(box);
+  });
+  var gl1=el('label','field-label','Asignatura'); gl1.setAttribute('for','gr-sub');
+  var gsub=subjectSelect('gr-sub');
+  var gl2=el('label','field-label','Trimestre'); gl2.setAttribute('for','gr-term');
+  var gterm=el('select','text-input'); gterm.id='gr-term';
+  ['1','2','3'].forEach(function(tr){ var o=document.createElement('option'); o.value=tr; o.textContent=tr+'º trimestre'; gterm.appendChild(o); });
+  var gl3=el('label','field-label','Nota (de 0 a 10)'); gl3.setAttribute('for','gr-val');
+  var gval=el('input','text-input'); gval.id='gr-val'; gval.type='text'; gval.inputMode='decimal'; gval.placeholder='Por ejemplo 7,5';
+  var gbtn=el('button','btn btn-primary','Guardar nota'); gbtn.disabled=true;
+  var gnote=el('p','caption');
+  function checkGrade(){ gbtn.disabled=!(gsub.value && gterm.value && gval.value.trim()); }
+  gsub.addEventListener('change',checkGrade); gterm.addEventListener('change',checkGrade); gval.addEventListener('input',checkGrade);
+  gbtn.addEventListener('click',function(){
+    var num=parseFloat(gval.value.trim().replace(',','.'));
+    if(isNaN(num) || num<0 || num>10){ gnote.textContent='La nota tiene que ser un número entre 0 y 10.'; return; }
+    num=Math.round(num*10)/10;
+    grades=grades.concat([{id:newId('g'),subject:gsub.value,term:gterm.value,value:num,date:todayISO()}]);
+    saveGrades(); gval.value=''; gnote.textContent=''; render();
+  });
+  [gl1,gsub,gl2,gterm,gl3,gval].forEach(function(x){ view.appendChild(x); });
+  var gfw=el('div','form-actions'); gfw.appendChild(gbtn); view.appendChild(gfw);
+  view.appendChild(gnote);
+
+  // -- Temas --
+  view.appendChild(el('h3','sub-title','🧩 Temas: ¿cómo los llevo?'));
+  if(topics.length===0){
+    view.appendChild(noteBox('🌱 Ningún tema apuntado','Apunta un tema y marca si lo entiendes, necesitas repasarlo o quieres preguntarlo en clase. Así sabrás qué repasar antes de cada examen.'));
+  }
+  var bySubject={};
+  topics.forEach(function(tp){ if(!bySubject[tp.subject]) bySubject[tp.subject]=[]; bySubject[tp.subject].push(tp); });
+  Object.keys(bySubject).sort().forEach(function(name){
+    var box=el('div','refl');
+    box.appendChild(subjChipTitle(name));
+    bySubject[name].forEach(function(tp){
+      var st=topicStatus(tp.status);
+      var row=el('div','task-row');
+      var txt=el('div','task-text',tp.text);
+      var pill=el('span','pill '+st.pill, st.short); txt.appendChild(pill);
+      var del=el('button','del','×'); del.setAttribute('aria-label','Borrar tema');
+      del.addEventListener('click',function(){ topics=topics.filter(function(x){return x.id!==tp.id;}); saveTopics(); render(); });
+      row.appendChild(txt); row.appendChild(del);
+      box.appendChild(row);
+      var btns=el('div');
+      TOPIC_STATUS.forEach(function(s2){
+        if(s2.key===tp.status) return;
+        var mb=el('button','mini-btn',s2.label);
+        mb.addEventListener('click',function(){
+          topics=topics.map(function(x){ return x.id===tp.id ? {id:x.id,subject:x.subject,text:x.text,status:s2.key,updated:todayISO()} : x; });
+          saveTopics(); render();
+        });
+        btns.appendChild(mb);
+      });
+      box.appendChild(btns);
+    });
+    view.appendChild(box);
+  });
+  var tl1=el('label','field-label','Asignatura'); tl1.setAttribute('for','tp-sub');
+  var tsub=subjectSelect('tp-sub');
+  var tl2=el('label','field-label','Tema'); tl2.setAttribute('for','tp-text');
+  var ttext=el('input','text-input'); ttext.id='tp-text'; ttext.type='text'; ttext.placeholder='Por ejemplo: las fracciones';
+  var tl3=el('label','field-label','¿Cómo lo llevas?'); tl3.setAttribute('for','tp-status');
+  var tst=el('select','text-input'); tst.id='tp-status';
+  TOPIC_STATUS.forEach(function(s2){ var o=document.createElement('option'); o.value=s2.key; o.textContent=s2.label; tst.appendChild(o); });
+  var tbtn=el('button','btn btn-primary','Apuntar tema'); tbtn.disabled=true;
+  function checkTopic(){ tbtn.disabled=!(tsub.value && ttext.value.trim()); }
+  tsub.addEventListener('change',checkTopic); ttext.addEventListener('input',checkTopic);
+  tbtn.addEventListener('click',function(){
+    topics=topics.concat([{id:newId('p'),subject:tsub.value,text:ttext.value.trim(),status:tst.value,updated:todayISO()}]);
+    saveTopics(); ttext.value=''; render();
+  });
+  [tl1,tsub,tl2,ttext,tl3,tst].forEach(function(x){ view.appendChild(x); });
+  var tfw=el('div','form-actions'); tfw.appendChild(tbtn); view.appendChild(tfw);
+
+  // -- Reflexiones --
+  view.appendChild(el('h3','sub-title','💭 Después de un examen'));
+  view.appendChild(el('p','caption','Pensar un momento qué pasó ayuda más de lo que parece: la próxima vez saldrá mejor.'));
+  if(reflections.length===0){
+    view.appendChild(noteBox('🌱 Sin reflexiones todavía','Después de tu próximo examen, apunta qué te costó, qué técnica te ayudó y una pequeña meta para el siguiente.'));
+  }
+  reflections.slice().sort(function(a,b){ return b.date.localeCompare(a.date); }).forEach(function(r){
+    var box=el('div','refl');
+    box.appendChild(subjChipTitle(r.subject));
+    box.appendChild(el('p','caption',fmtLong(r.date)));
+    if(r.hard) box.appendChild(el('p',null,'😓 Me costó: '+r.hard));
+    if(r.technique) box.appendChild(el('p',null,'💪 Me ayudó: '+r.technique));
+    if(r.goal) box.appendChild(el('p',null,'🎯 Mi meta para el próximo: '+r.goal));
+    var del=el('button','del','×'); del.setAttribute('aria-label','Borrar reflexión');
+    del.addEventListener('click',function(){ reflections=reflections.filter(function(x){return x.id!==r.id;}); saveReflections(); render(); });
+    box.appendChild(del);
+    view.appendChild(box);
+  });
+  var rl1=el('label','field-label','Asignatura'); rl1.setAttribute('for','rf-sub');
+  var rsub=subjectSelect('rf-sub');
+  var rl2=el('label','field-label','¿Qué me costó?'); rl2.setAttribute('for','rf-hard');
+  var rhard=el('input','text-input'); rhard.id='rf-hard'; rhard.type='text'; rhard.placeholder='Por ejemplo: los problemas de dos pasos';
+  var rl3=el('label','field-label','¿Qué técnica me ayudó?'); rl3.setAttribute('for','rf-tech');
+  var rtech=el('select','text-input'); rtech.id='rf-tech';
+  ['Ponte a prueba','Repartir el estudio en varios días','Explicarlo con mis palabras','Bloques de 25 minutos','Otra'].forEach(function(tn){
+    var o=document.createElement('option'); o.value=tn; o.textContent=tn; rtech.appendChild(o);
+  });
+  var rl4=el('label','field-label','Mi meta para el próximo examen'); rl4.setAttribute('for','rf-goal');
+  var rgoal=el('input','text-input'); rgoal.id='rf-goal'; rgoal.type='text'; rgoal.placeholder='Por ejemplo: empezar a repasar antes';
+  var rbtn=el('button','btn btn-primary','Guardar reflexión'); rbtn.disabled=true;
+  function checkRefl(){ rbtn.disabled=!(rsub.value && (rhard.value.trim() || rgoal.value.trim())); }
+  rsub.addEventListener('change',checkRefl); rhard.addEventListener('input',checkRefl); rgoal.addEventListener('input',checkRefl);
+  rbtn.addEventListener('click',function(){
+    reflections=reflections.concat([{id:newId('r'),subject:rsub.value,hard:rhard.value.trim(),technique:rtech.value,goal:rgoal.value.trim(),date:todayISO()}]);
+    saveReflections(); rhard.value=''; rgoal.value=''; render();
+  });
+  [rl1,rsub,rl2,rhard,rl3,rtech,rl4,rgoal].forEach(function(x){ view.appendChild(x); });
+  var rfw=el('div','form-actions'); rfw.appendChild(rbtn); view.appendChild(rfw);
+}
+
 // ---- Navegación y arranque ----
 document.querySelectorAll('.tabs button').forEach(function(b){
   b.addEventListener('click',function(){ tab=b.dataset.tab; if(('#'+tab)!==location.hash) location.hash='#'+tab; render(); });
 });
-function fromHash(){ var h=(location.hash||'').replace('#',''); if(['hoy','semana','examenes','tecnicas','copia'].indexOf(h)>=0) tab=h; }
+function fromHash(){ var h=(location.hash||'').replace('#',''); if(['hoy','semana','mes','examenes','tecnicas','progreso','copia'].indexOf(h)>=0) tab=h; }
 window.addEventListener('hashchange',function(){ fromHash(); render(); });
 fromHash();
 document.getElementById('today-fact').textContent=fmtLong(todayISO());
@@ -465,7 +784,17 @@ if(/[?&]selftest=1/.test(location.search)){
     tab='semana'; render();
     out.push(view.textContent.indexOf('Mi semana')>=0 && view.textContent.indexOf('Tarea de prueba')>=0 ? 'semana-ok' : 'semana-FAIL');
     out.push(view.querySelectorAll('.subj-chip').length>=2 ? 'chips-ok' : 'chips-FAIL');
-    tasks=[]; exams=[]; saveTasks(); saveExams();
+    grades=[{id:'g1',subject:'Mates',term:'1',value:7,date:todayISO()}]; saveGrades();
+    topics=[{id:'p1',subject:'Mates',text:'Fracciones',status:'repasar',updated:todayISO()}]; saveTopics();
+    reflections=[{id:'r1',subject:'Mates',hard:'Los problemas',technique:'Ponte a prueba',goal:'Empezar antes',date:todayISO()}]; saveReflections();
+    tab='mes'; render();
+    out.push(view.querySelectorAll('.mes-cell').length>=28 ? 'mes-ok' : 'mes-FAIL');
+    tab='progreso'; render();
+    out.push(view.textContent.indexOf('Mis notas')>=0 && view.textContent.indexOf('Fracciones')>=0 ? 'progreso-ok' : 'progreso-FAIL');
+    var nTasks=tasks.length;
+    var made=makeExamPlan('Mates', toISO(new Date(Date.now()+6*DAY_MS)), ['Tema A','Tema B'], [0,1,2,3,4,5,6]);
+    out.push(made>=3 && tasks.length===nTasks+made ? 'plan-ok' : 'plan-FAIL');
+    tasks=[]; exams=[]; grades=[]; topics=[]; reflections=[]; saveTasks(); saveExams(); saveGrades(); saveTopics(); saveReflections();
     tab='hoy'; render();
     var passed=out.every(function(x){return x.indexOf('FAIL')<0;});
     document.title='SELFTEST '+(passed?'PASS':'FAIL')+' '+out.join(',');
